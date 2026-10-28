@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>种草流水线 · 品牌内容 Copilot</title>
+<style>
+  :root{
+    --bg:#0d0f12; --panel:#14181d; --panel2:#191e24; --line:#242b33;
+    --ink:#e8edf2; --dim:#8d99a6; --faint:#5b6673;
+    --accent:#f0b429; --accent2:#ff7a45;
+    --ok:#4ec9a0; --warn:#f0b429; --bad:#f2555a; --info:#6aa9ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--info)}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 80px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:21px;margin:0;letter-spacing:.3px;font-weight:650}
+  h1 span{color:var(--faint);font-weight:400;font-size:14px;margin-left:10px}
+  .brand{font-size:13px;color:var(--dim)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;color:var(--dim);background:var(--panel)}
+  .chip b{color:var(--ink);font-weight:600}
+  .sub{color:var(--faint);font-size:13px;margin:10px 0 22px;max-width:760px}
+  .cases{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .case{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px 13px;cursor:pointer;transition:.15s}
+  .case:hover{border-color:#3a4653;background:var(--panel2)}
+  .case.on{border-color:var(--accent);background:#1c1a12;box-shadow:0 0 0 1px var(--accent) inset}
+  .case h3{margin:0 0 3px;font-size:13.5px;font-weight:600}
+  .case p{margin:0;font-size:12px;color:var(--faint);line-height:1.5}
+  textarea{width:100%;min-height:104px;resize:vertical;background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;padding:13px 14px;font:14px/1.7 inherit;outline:none}
+  textarea:focus{border-color:#3f4c5a}
+  .row{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+  button{background:var(--accent);color:#1a1305;border:0;border-radius:9px;padding:10px 20px;
+    font:600 14px inherit;cursor:pointer;transition:.15s}
+  button:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.45;cursor:default;filter:none}
+  button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+  .hint{font-size:12px;color:var(--faint)}
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:22px 0 6px}
+  .step{border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--panel);opacity:.4;transition:.25s}
+  .step.active{opacity:1;border-color:var(--accent);background:#1b1810}
+  .step.done{opacity:1;border-color:#2c4a3f;background:#121a17}
+  .step .k{font-size:11px;color:var(--faint);letter-spacing:.5px}
+  .step .v{font-size:12.5px;margin-top:2px;color:var(--ink);min-height:19px}
+  .step.done .v{color:var(--ok)}
+  .step .sec{font-size:11px;color:var(--faint);margin-top:1px}
+  /* tabs */
+  nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:26px 0 20px;flex-wrap:wrap}
+  nav.tabs button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--faint);
+    padding:9px 14px;border-radius:0;font-weight:500;font-size:13.5px}
+  nav.tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+  .tab{display:none}.tab.on{display:block}
+  /* note cards */
+  .notes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .note{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:16px 16px 14px;display:flex;flex-direction:column}
+  .note .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:5px;background:#1f2833;color:var(--info);border:1px solid #26313d}
+  .note h3{font-size:15px;margin:0 0 12px;line-height:1.5;font-weight:600}
+  .body{font-size:13px;line-height:1.85;color:#ccd5de;flex:1;max-height:300px;overflow:hidden;position:relative}
+  .body.open{max-height:none}
+  .body:not(.open)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:52px;background:linear-gradient(180deg,rgba(20,24,29,0),rgba(20,24,29,.96))}
+  .more{background:none;border:0;color:var(--accent);font:500 11.5px inherit;padding:4px 0 0;cursor:pointer}
+  .body p{margin:0 0 10px}
+  mark{background:transparent;color:inherit;border-radius:3px;padding:0 1px}
+  mark.bad{background:rgba(242,85,90,.22);box-shadow:0 0 0 1px rgba(242,85,90,.5) inset;color:#ffd7d8}
+  mark.warn{background:rgba(240,180,41,.18);box-shadow:0 0 0 1px rgba(240,180,41,.42) inset;color:#ffe9b8}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 12px}
+  .tag{font-size:11.5px;color:var(--dim);background:#171d24;border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+  .metrics{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:11px}
+  .m{font-size:11.5px;color:var(--dim)}
+  .m b{color:var(--ink);font-weight:600}
+  .m.ok b{color:var(--ok)} .m.bad b{color:var(--bad)}
+  .changes{margin-top:10px;border-top:1px dashed #2b333d;padding-top:9px;font-size:11.5px;color:var(--warn);line-height:1.6}
+  .changes div{margin-bottom:4px}
+  /* generic blocks */
+  .block{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+  .block h4{margin:0 0 12px;font-size:13px;color:var(--dim);font-weight:600;letter-spacing:.4px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;font-size:13px}
+  .kv .k{color:var(--faint)}
+  .hit{border-bottom:1px solid var(--line);padding:11px 0;display:grid;grid-template-columns:74px 1fr 116px;gap:12px;align-items:start}
+  .hit:last-child{border-bottom:0}
+  .hit .id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--faint)}
+  .hit .ttl{font-size:13px;font-weight:600;margin-bottom:3px}
+  .hit .txt{font-size:12px;color:var(--dim);line-height:1.65}
+  .hit .src{font-size:11px;color:var(--faint);margin-top:5px}
+  .bar{height:5px;background:#20272f;border-radius:99px;overflow:hidden;margin-bottom:5px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+  .score{font-size:11px;color:var(--faint);text-align:right}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--faint);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line);font-size:11.5px;letter-spacing:.4px}
+  td{padding:10px;border-bottom:1px solid #1c2229;vertical-align:top}
+  td.ctx{color:var(--dim);font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+  .lvl{font-size:11px;padding:1px 7px;border-radius:4px;white-space:nowrap}
+  .lvl.v{background:rgba(242,85,90,.16);color:#ff9fa3;border:1px solid rgba(242,85,90,.35)}
+  .lvl.r{background:rgba(240,180,41,.14);color:#ffd98a;border:1px solid rgba(240,180,41,.32)}
+  /* compare */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .cmp .col{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel)}
+  .cmp .col.badcol{border-color:#402a2c}
+  .cmp .col h4{margin:0 0 4px;color:var(--ink);font-size:13.5px;letter-spacing:0}
+  .cmp .col .tagline{font-size:11.5px;color:var(--faint);margin-bottom:12px}
+  .cmpnote{font-size:12.5px;line-height:1.8;color:#c3ccd6;max-height:210px;overflow:hidden;position:relative}
+  .cmpnote::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(180deg,rgba(20,24,29,0),rgba(20,24,29,.95))}
+  .hits{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+  .hitpill{font-size:11px;padding:1px 7px;border-radius:4px;background:rgba(242,85,90,.14);color:#ff9fa3;border:1px solid rgba(242,85,90,.3)}
+  .cmprow{display:grid;grid-template-columns:112px 1fr 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #1c2229;font-size:12.5px}
+  .cmprow .l{color:var(--faint)}
+  .cmprow .a,.cmprow .b{font-variant-numeric:tabular-nums}
+  .num{font-size:26px;font-weight:650;letter-spacing:-.5px}
+  .grid3{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:14px}
+  .stat .k{font-size:11.5px;color:var(--faint);margin-bottom:4px}
+  .stat .v{font-size:22px;font-weight:650;letter-spacing:-.4px}
+  .stat .v.good{color:var(--ok)} .stat .v.bad{color:var(--bad)}
+  .stat .n{font-size:11px;color:var(--faint);margin-top:2px}
+  footer{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;font-size:11.5px;color:var(--faint);line-height:1.9}
+  .empty{color:var(--faint);font-size:13px;padding:34px 0;text-align:center}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid #3a3324;border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media(max-width:900px){
+    .cases,.notes{grid-template-columns:1fr}
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .cmp{grid-template-columns:1fr}
+    .grid3{grid-template-columns:repeat(2,1fr)}
+    .hit{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>种草流水线 <span>品牌内容 Copilot · 可溯源 / 有闸门 / 可度量</span></h1>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="brand" id="brand"></div>
+  </header>
+  <p class="sub">一条 brief 进来，走完「理解意图 → 召回品牌资产 → 定策略 → 写 → 过合规闸门 → 度量」六步。每篇稿子都能回答三个问题：这句话的依据在哪、有没有越界、成本多少。</p>
+
+  <div class="cases" id="cases"></div>
+  <textarea id="brief" placeholder="把客户 brief 粘进来…"></textarea>
+  <div class="row">
+    <button id="run">跑一遍</button>
+    <button id="clear" class="ghost">清空结果</button>
+    <span class="hint" id="hint">大约 25-40 秒：解析 → 检索 → 策略 → 3 篇撰写 → 闸门</span>
+  </div>
+
+  <div class="steps" id="steps"></div>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="notes" class="on">产出内容</button>
+    <button data-tab="gate">质量闸门</button>
+    <button data-tab="rag">检索依据</button>
+    <button data-tab="cmp">对照实验</button>
+    <button data-tab="metrics">度量</button>
+  </nav>
+
+  <section class="tab on" id="tab-notes"><div class="empty" id="notes-empty">还没有结果。选一个案例，点「跑一遍」。</div><div class="notes" id="notes"></div></section>
+  <section class="tab" id="tab-gate"><div class="empty" id="gate-empty">还没有结果。</div><div id="gate"></div></section>
+  <section class="tab" id="tab-rag"><div class="empty" id="rag-empty">还没有结果。</div><div id="rag"></div></section>
+  <section class="tab" id="tab-cmp"><div class="empty" id="cmp-empty">还没有结果。</div><div id="cmp"></div></section>
+  <section class="tab" id="tab-metrics"><div class="empty" id="metrics-empty">还没有结果。</div><div id="metrics"></div></section>
+
+  <footer>
+    <div>链路：Brief 解析 · 品牌资产召回（BM25 + 客户指定卖点锚点） · 策略 · 撰写 · 规则闸门 · 人工复核位</div>
+    <div>闸门为什么用规则不用模型：违禁词表是确定的，模型会漏、会解释、会改口；规则还能给出精确位置，让人一处一处改。模型只在「怎么改」这一步介入。</div>
+    <div>demo 使用虚构品牌「澄野」与自建资产库，结构与真实品牌 brief / 历史爆文拆解 / 平台规范同构，可直接换成任一家客户资产。</div>
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let META = null;
+
+const STEP_NAMES = [
+  ["brief","① Brief 解析","理解意图与禁区"],
+  ["rag","② 资产召回","品牌库检索"],
+  ["strategy","③ 内容策略","三种骨架"],
+  ["write","④ 撰写","并行出稿"],
+  ["audit","⑤ 闸门与度量","规则 + 事实"],
+];
+
+async function boot(){
+  const r = await fetch("/api/meta"); META = await r.json();
+  $("#brand").textContent = META.brand.name + " · " + META.brand.product;
+  const nAssets = META.assets.length, nRules = META.rules.length;
+  const nPat = META.rules.reduce((a,b)=>a+b.n,0);
+  $("#chips").innerHTML = [
+    ["品牌资产", nAssets + " 条"],
+    ["合规规则", nRules + " 类 / " + nPat + " 词"],
+    ["检索", "BM25 + 锚点"],
+    ["模型", "deepseek-flash"],
+    ["人工位", "合并前必审"],
+  ].map(([k,v])=>`<span class="chip">${k} <b>${v}</b></span>`).join("");
+  $("#cases").innerHTML = META.cases.map((c,i)=>
+    `<div class="case${i===0?" on":""}" data-i="${i}"><h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p></div>`).join("");
+  document.querySelectorAll(".case").forEach(el=>el.onclick=()=>{
+    document.querySelectorAll(".case").forEach(x=>x.classList.remove("on"));
+    el.classList.add("on"); $("#brief").value = META.cases[+el.dataset.i].brief;
+  });
+  $("#brief").value = META.cases[0].brief;
+  $("#steps").innerHTML = STEP_NAMES.map(([k,n,d])=>
+    `<div class="step" data-k="${k}"><div class="k">${n}</div><div class="v"></div><div class="sec">${d}</div></div>`).join("");
+}
+
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); $("#tab-"+b.dataset.tab).classList.add("on");
+});
+
+$("#clear").onclick = ()=>{ location.reload(); };
+
+$("#run").onclick = async () => {
+  const brief = $("#brief").value.trim();
+  if(brief.length < 10) return;
+  $("#run").disabled = true;
+  $("#hint").innerHTML = '<span class="spinner"></span>正在跑…';
+  document.querySelectorAll(".step").forEach(s=>{s.className="step"; s.querySelector(".v").textContent="";});
+  ["notes","gate","rag","cmp","metrics"].forEach(k=>{$("#"+k).innerHTML=""; $("#"+k+"-empty").style.display="none";});
+
+  try{
+    const res = await fetch("/api/run", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({brief})});
+    const reader = res.body.getReader(); const dec = new TextDecoder();
+    let buf = "";
+    while(true){
+      const {value, done} = await reader.read(); if(done) break;
+      buf += dec.decode(value, {stream:true});
+      const parts = buf.split("\n\n"); buf = parts.pop();
+      for(const p of parts){
+        const ev = (p.match(/^event: (.+)$/m)||[])[1];
+        const dt = (p.match(/^data: (.+)$/m)||[])[1];
+        if(!ev || !dt) continue;
+        const data = JSON.parse(dt);
+        if(ev==="step") markStep(data);
+        if(ev==="result") render(data);
+        if(ev==="error") $("#hint").textContent = "出错了：" + data.message;
+      }
+    }
+  }catch(e){ $("#hint").textContent = "请求失败：" + e.message; }
+  $("#run").disabled = false;
+  $("#hint").textContent = "再跑一次会重新生成——同一 brief 每次结果都不同。";
+};
+
+function markStep(d){
+  const el = document.querySelector(`.step[data-k="${d.step}"]`);
+  if(!el) return;
+  document.querySelectorAll(".step").forEach(x=>{ if(x!==el && !x.classList.contains("done")) x.classList.remove("active"); });
+  el.className = "step done";
+  el.querySelector(".v").textContent = d.detail;
+  const sec = el.querySelector(".sec"); if(d.sec!=null) sec.textContent = d.sec + "s";
+}
+
+function hl(text, hits, offset, cls){
+  if(!hits || !hits.length) return esc(text).replace(/\n/g,"</p><p>");
+  const segs = hits.map(h=>({s:h.position-(offset||0), e:h.position-(offset||0)+h.span.length, lvl:h.level==="违规"?"bad":"warn"}))
+                   .filter(h=>h.s>=0).sort((a,b)=>a.s-b.s);
+  let out="", cur=0;
+  for(const s of segs){
+    if(s.s<cur) continue;
+    out += esc(text.slice(cur,s.s)) + `<mark class="${s.lvl}">${esc(text.slice(s.s,s.e))}</mark>`;
+    cur = s.e;
+  }
+  out += esc(text.slice(cur));
+  return out.replace(/\n/g,"</p><p>");
+}
+
+function render(d){
+  // 内容
+  $("#notes").innerHTML = d.notes.map(n=>`
+    <article class="note">
+      <div class="top"><span class="badge">${esc(n.structure||"")}</span>
+        <span class="m ${n.audit.passed?"ok":"bad"}"><b>${n.audit.passed?"过闸":"待改"}</b></span></div>
+      <h3>${esc(n.title)}</h3>
+      <div class="body"><p>${hl(n.body, n.audit.hits, n.body_offset)}</p></div>
+      <button class="more" onclick="this.previousElementSibling.classList.toggle('open');this.textContent=this.previousElementSibling.classList.contains('open')?'收起':'展开全文'">展开全文</button>
+      <div class="tags">${(n.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}</div>
+      <div class="metrics">
+        <span class="m"><b>${n.metrics.chars}</b> 字</span>
+        <span class="m"><b>${n.metrics.paras}</b> 段</span>
+        <span class="m"><b>${n.metrics.coverage}</b> 卖点覆盖</span>
+        <span class="m ${n.metrics.facts.count?"bad":"ok"}"><b>${n.metrics.facts.count}</b> 无据事实</span>
+        <span class="m ${n.audit.violation_count?"bad":"ok"}"><b>${n.audit.violation_count}</b> 违规</span>
+      </div>
+      ${(n.changes&&n.changes.length)?`<div class="changes">${n.changes.map(c=>`<div>↳ ${esc(c)}</div>`).join("")}</div>`:""}
+    </article>`).join("");
+
+  // 闸门
+  const rows = [];
+  d.notes.forEach((n,i)=>{
+    (n.audit_before.hits||[]).forEach(h=>rows.push({src:`稿 ${i+1} · 初稿`, ...h}));
+  });
+  (d.baseline.audit.hits||[]).forEach(h=>rows.push({src:"对照组", ...h}));
+  (d.baseline.facts.flagged||[]).forEach(f=>rows.push({src:"对照组", rule_name:"无据事实", level:"违规", basis:f.reason, span:f.span, context:f.context, suggestion:"删除或换成资产库里的真实数字"}));
+  d.notes.forEach((n,i)=>{
+    (n.metrics.facts.flagged||[]).forEach(f=>rows.push({src:`稿 ${i+1} · 终稿`, rule_name:"无据事实", level:"违规", basis:f.reason, span:f.span, context:f.context, suggestion:"删除或换成资产库里的真实数字"}));
+  });
+  $("#gate").innerHTML = rows.length ? `<div class="block"><h4>共 ${rows.length} 处需要处理 · 终稿违规 ${d.notes.reduce((a,n)=>a+n.audit.violation_count,0)} 处</h4>
+    <table><thead><tr><th>来源</th><th>命中</th><th>判定</th><th>依据 / 上下文</th><th>处理建议</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td style="color:var(--faint);white-space:nowrap">${esc(r.src)}</td>
+      <td><b>${esc(r.span)}</b></td>
+      <td><span class="lvl ${r.level==="违规"?"v":"r"}">${esc(r.level)}·${esc(r.rule_name)}</span></td>
+      <td class="ctx">${esc(r.basis)}<br><span style="color:#4e5966">…${esc(r.context)}…</span></td>
+      <td style="color:var(--dim);font-size:12px">${esc(r.suggestion||"")}</td></tr>`).join("")}
+    </tbody></table></div>`
+    : `<div class="block"><h4>闸门结果</h4><p style="color:var(--dim);font-size:13px;margin:0">全部通过：3 篇终稿 + 对照组均无违禁词与无据事实。</p></div>`;
+
+  // 检索
+  $("#rag").innerHTML = `<div class="block"><h4>检索式（由 brief 改写而来，不是原始 brief）</h4>
+      <div style="font-size:12.5px;color:var(--dim);line-height:2">${d.retrieval.queries.map(q=>`· ${esc(q)}`).join("<br>")}</div></div>
+    <div class="block"><h4>召回 ${d.retrieval.hits.length} 条品牌资产 · 按相关度</h4>
+    ${d.retrieval.hits.map(h=>`
+      <div class="hit">
+        <div class="id">${esc(h.id)}<br><span style="color:#39424d">${esc(h.type)}</span></div>
+        <div><div class="ttl">${esc(h.title)} ${h.anchor?'<span class="badge" style="margin-left:6px">客户指定</span>':""}</div>
+          <div class="txt">${esc(h.text)}</div>
+          <div class="src">来源：${esc(h.from_query||"")}${(h.why&&h.why.length)?` · 命中词 ${h.why.map(esc).join(" / ")}`:""}</div></div>
+        <div><div class="bar"><i style="width:${Math.min(100, h.score*9)}%"></i></div><div class="score">相关度 ${h.score}</div></div>
+      </div>`).join("")}</div>`;
+
+  // 对照
+  const c = d.compare, b = d.baseline;
+  $("#cmp").innerHTML = `
+    <div class="block"><h4>同一个模型、同一条 brief，两条路径</h4>
+    <div class="cmp">
+      <div class="col badcol"><h4>对照组 · 直接让模型写</h4>
+        <div class="tagline">不给品牌资产、不给调性、不过闸门 —— 这是大多数团队现在的默认做法</div>
+        <div class="cmpnote"><b>${esc(b.title)}</b><br><br>${esc((b.body||"").slice(0,420))}…</div>
+        <div class="hits">${(b.audit.hits||[]).length?"拦截命中："+b.audit.hits.map(h=>`<span class="hitpill">${esc(h.span)}</span>`).join(""):"未命中规则"}</div>
+        <div class="metrics" style="margin-top:12px">
+          <span class="m ${b.audit.violation_count?"bad":"ok"}"><b>${b.audit.violation_count}</b> 违规</span>
+          <span class="m ${b.facts.count?"bad":"ok"}"><b>${b.facts.count}</b> 无据事实</span>
+          <span class="m" title="库内 5 个卖点命中数"><b>${b.coverage}</b> 卖点覆盖</span>
+          <span class="m"><b>${b.chars}</b> 字</span>
+        </div></div>
+      <div class="col"><h4>本系统 · 资产 + 闸门</h4>
+        <div class="tagline">3 篇不同骨架，每篇可溯源、过闸门、带指标</div>
+        <div class="cmpnote">${d.notes.map(n=>`<div style="margin-bottom:10px"><b style="color:#e8edf2">${esc(n.title)}</b><br><span style="color:var(--faint);font-size:11.5px">${esc(n.structure)} · ${n.metrics.coverage} 覆盖 · ${n.audit.violation_count} 违规</span></div>`).join("")}</div>
+        <div class="metrics" style="margin-top:12px">
+          <span class="m ${c.with_system.violation_items?"bad":"ok"}"><b>${c.with_system.violation_items}</b> 违规</span>
+          <span class="m ${c.with_system.fact_items?"bad":"ok"}"><b>${c.with_system.fact_items}</b> 无据事实</span>
+          <span class="m" title="3 篇平均，分母为库内 5 个卖点"><b>${c.with_system.coverage}</b> 平均卖点覆盖</span>
+          <span class="m"><b>${c.with_system.notes}</b> 篇</span>
+        </div></div>
+    </div></div>`;
+
+  // 度量
+  $("#metrics").innerHTML = `<div class="grid3">
+      <div class="stat"><div class="k">端到端耗时</div><div class="v">${d.summary.total_sec}<span style="font-size:14px">s</span></div><div class="n">3 篇 + 1 篇对照</div></div>
+      <div class="stat"><div class="k">合规一次通过</div><div class="v ${d.summary.compliance_pass.split("/")[0]===d.summary.compliance_pass.split("/")[1]?"good":"bad"}">${esc(d.summary.compliance_pass)}</div><div class="n">过闸未改写</div></div>
+      <div class="stat"><div class="k">模型调用</div><div class="v">${d.summary.llm_calls}</div><div class="n">次 / 一轮</div></div>
+      <div class="stat"><div class="k">人工复核位</div><div class="v" style="font-size:17px;padding-top:6px">合并前必审</div><div class="n">不设自动发布</div></div>
+    </div>
+    <div class="block" style="margin-top:14px"><h4>Brief 解析结果（可核对，不是黑箱）</h4>
+      <div class="kv">
+        <div class="k">目标</div><div>${esc(d.brief.goal||"")}</div>
+        <div class="k">人群</div><div>${esc(d.brief.audience||"")}</div>
+        <div class="k">痛点</div><div>${esc(d.brief.pain||"")}</div>
+        <div class="k">必说卖点</div><div>${(d.brief.key_points||[]).map(esc).join(" · ")}</div>
+        <div class="k">禁区</div><div>${(d.brief.avoid||[]).map(esc).join(" · ")}</div>
+      </div></div>`;
+}
+boot();
+</script>
+</body>
+</html>

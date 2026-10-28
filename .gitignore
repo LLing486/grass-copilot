@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+# 运行时产物
+data/demo_aw.json
+data/sample_run.json
+# dsh 原始调研记录（含推理过程），清洗后的报告在 docs/research/
+research/
