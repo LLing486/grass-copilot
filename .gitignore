@@ -6,4 +6,4 @@ __pycache__/
 data/demo_aw.json
 data/sample_run.json
 # dsh 原始调研记录（含推理过程），清洗后的报告在 docs/research/
-research/
+/research/
